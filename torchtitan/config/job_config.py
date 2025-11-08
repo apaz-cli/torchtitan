@@ -86,6 +86,9 @@ class Metrics:
     enable_wandb: bool = False
     """Whether to log metrics to Weights & Biases"""
 
+    enable_aim: bool = False
+    """Whether to log metrics to Aim"""
+
 
 @dataclass
 class Model:
