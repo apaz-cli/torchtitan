@@ -26,12 +26,17 @@ else
     USER_CUDA_ARCH=""
 fi
 
-# Check if ao repo exists
-AO_PATH="${AO_PATH:-$HOME/git/ao}"
+# Check if ao repo exists, clone if not
+AO_PATH="${AO_PATH:-../ao}"
 if [ ! -d "$AO_PATH" ]; then
-    echo -e "${RED}Error: torchao repository not found at $AO_PATH${NC}"
-    echo "Please clone it with: git clone https://github.com/pytorch/ao $AO_PATH"
-    exit 1
+    echo -e "${YELLOW}torchao repository not found at $AO_PATH${NC}"
+    echo -e "${YELLOW}Cloning torchao repository...${NC}"
+    git clone https://github.com/pytorch/ao "$AO_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to clone torchao repository${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}Successfully cloned torchao to $AO_PATH${NC}"
 fi
 
 # Activate venv
