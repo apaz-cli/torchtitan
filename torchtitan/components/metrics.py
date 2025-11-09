@@ -178,8 +178,8 @@ class AimLogger(BaseLogger):
         # This allows comparing multiple runs in a single Aim UI
         aim_repo = os.getenv("AIM_REPO", None)
         if aim_repo is None:
-            # Default to dump_folder/.aim for shared repository
-            aim_repo = os.path.join(job_config.job.dump_folder, ".aim")
+            # Default to .aim at repo root for shared repository
+            aim_repo = ".aim"
 
         # Create Aim repository directory if it doesn't exist
         os.makedirs(aim_repo, exist_ok=True)

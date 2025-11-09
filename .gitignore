@@ -8,6 +8,7 @@ dist/*
 .vscode
 .vs
 .venv/**
+.aim/**
 
 # data
 data

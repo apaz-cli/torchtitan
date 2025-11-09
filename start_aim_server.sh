@@ -3,8 +3,8 @@
 # Activate virtual environment
 . .venv/bin/activate
 
-# Set the Aim repository path (default to outputs/.aim)
-AIM_REPO="${AIM_REPO:-./outputs/.aim}"
+# Set the Aim repository path (default to .aim at repo root)
+AIM_REPO="${AIM_REPO:-./.aim}"
 
 # Create Aim repository directory if it doesn't exist
 if [ ! -d "$AIM_REPO" ]; then
