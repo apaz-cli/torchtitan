@@ -55,6 +55,9 @@ class Qwen3ModelArgs(BaseModelArgs):
             )
         self.max_seq_len = seq_len
 
+        # Update attention implementation from config
+        self.use_flex_attn = job_config.model.use_flex_attn
+
         self.moe_args._debug_force_load_balance = (
             job_config.training.debug_moe_force_load_balance
         )

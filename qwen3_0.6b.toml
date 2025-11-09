@@ -3,9 +3,9 @@ dump_folder = "./outputs"
 description = "Qwen 3 0.6B training"
 
 [profiling]
-enable_profiling = false
+enable_profiling = true
 save_traces_folder = "profile_trace"
-profile_freq = 100
+profile_freq = 10
 
 [metrics]
 log_freq = 1
@@ -19,8 +19,8 @@ save_for_all_ranks = false
 name = "qwen3"
 flavor = "0.6B"
 hf_assets_path = "./assets/hf/Qwen3-0.6B"
-#converters = ["float8"]
-converters = ["quantize.linear.mx"]
+converters = ["quantize.linear.mx"] # ["float8"]
+use_flex_attn = true
 
 [optimizer]
 name = "AdamW"
@@ -31,8 +31,8 @@ eps = 1e-8
 warmup_steps = 2  # lr scheduler warm up, 20% total steps
 
 [training]
-global_batch_size = 16
-local_batch_size = 2
+global_batch_size = 15
+local_batch_size = 3
 seq_len = 4096
 max_norm = 1.0  # grad norm clipping
 steps = 20000
@@ -48,21 +48,21 @@ context_parallel_degree = 1
 [checkpoint]
 enable = true
 folder = "checkpoint"
-interval = 500
+interval = 250
 last_save_model_only = false
 export_dtype = "float16"
 keep_latest_k = 2
-async_mode = "disabled" # ["disabled", "async", "async_with_pinned_mem"]
+async_mode = "async" # ["disabled", "async", "async_with_pinned_mem"]
 
 [activation_checkpoint]
-mode = "selective"  # ["none", "selective", "full"]
+mode = "full"  # ["none", "selective", "full"]
 selective_ac_option = "op"  # "int" = ac every positive int layer or 'op', ac based on ops policy
 
 [compile]
-enable=true
+enable = true
 components = ["model", "loss"]
 
 [quantize.linear.mx]
-recipe_name = "mxfp8_cublas"                    # Default recipe
+recipe_name = "mxfp8_cublas" # "mxfp8_emulated" | "mxfp8_cublas" | "mxfp8_cublas_rceil" | "mxfp4_emulated" | "mxfp4_cutlass"
 mxfp8_dim1_cast_kernel_choice = "cuda"          # Options: "triton", "cuda", "torch" 
 filter_fqns = ["output"]                        # Modules to skip (default skips output layer)

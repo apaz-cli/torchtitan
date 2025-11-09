@@ -123,6 +123,12 @@ class Model:
     converters have been applied.
     """
 
+    use_flex_attn: bool = False
+    """
+    Use FlexAttention for attention computation instead of scaled_dot_product_attention.
+    FlexAttention is compiled with max-autotune mode for better performance.
+    """
+
 
 @dataclass
 class Optimizer:
