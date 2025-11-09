@@ -54,6 +54,9 @@ def maybe_enable_profiling(
                 f"Finished dumping profiler traces in {time.monotonic() - begin:.2f} seconds"
             )
 
+            # Mark that a trace has been captured
+            prof.trace_captured = True
+
         logger.info(f"Profiling active. Traces will be saved at {trace_dir}")
 
         if not os.path.exists(trace_dir):
@@ -78,6 +81,7 @@ def maybe_enable_profiling(
             record_shapes=True,
         ) as torch_profiler:
             torch_profiler.step_num = global_step
+            torch_profiler.trace_captured = False
             yield torch_profiler
     else:
         torch_profiler = contextlib.nullcontext()

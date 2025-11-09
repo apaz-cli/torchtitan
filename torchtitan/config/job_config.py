@@ -60,6 +60,9 @@ class Profiling:
     save_memory_snapshot_folder: str = "memory_snapshot"
     """Memory snapshot files location"""
 
+    kill_after_profile: bool = False
+    """Exit training after the first profiling trace is captured"""
+
 
 @dataclass
 class Metrics:

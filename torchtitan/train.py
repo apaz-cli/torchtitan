@@ -642,6 +642,18 @@ class Trainer(torch.distributed.checkpoint.stateful.Stateful):
                 if memory_profiler:
                     memory_profiler.step()
 
+                # Check if we should exit after profiling
+                if (
+                    job_config.profiling.kill_after_profile
+                    and torch_profiler
+                    and hasattr(torch_profiler, "trace_captured")
+                    and torch_profiler.trace_captured
+                ):
+                    logger.info(
+                        "Profiling trace captured and kill_after_profile is enabled. Exiting training."
+                    )
+                    break
+
                 # reduce timeout after first train step for faster signal
                 # (assuming lazy init and compilation are finished)
                 if self.step == 1:

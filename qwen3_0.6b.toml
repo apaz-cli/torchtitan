@@ -67,6 +67,7 @@ save_tb_folder = "tb"
 save_for_all_ranks = false
 
 [profiling]
-enable_profiling = false
+enable_profiling = true
+kill_after_profile = true
 save_traces_folder = "profile_trace"
 profile_freq = 10
