@@ -84,10 +84,21 @@ def parallelize_qwen3(
         # all-gather happens in high precision.
         enable_float8_tensorwise_tp = enable_float8_linear and not float8_is_rowwise
 
+        # Check for incompatible loss_parallel + use_liger_loss configuration
+        use_liger_loss = getattr(model.model_args, "use_liger_loss", False)
+        if use_liger_loss and not job_config.parallelism.disable_loss_parallel:
+            raise RuntimeError(
+                "use_liger_loss=True is incompatible with loss_parallel. "
+                "Liger fused linear cross entropy requires non-sharded vocab weights. "
+                "Please set parallelism.disable_loss_parallel=true in your config."
+            )
+
+        loss_parallel = not job_config.parallelism.disable_loss_parallel
+
         apply_non_moe_tp(
             model,
             world_mesh["tp"],
-            loss_parallel=not job_config.parallelism.disable_loss_parallel,
+            loss_parallel=loss_parallel,
             enable_float8_tensorwise_tp=enable_float8_tensorwise_tp,
             enable_async_tp=job_config.parallelism.enable_async_tensor_parallel,
         )

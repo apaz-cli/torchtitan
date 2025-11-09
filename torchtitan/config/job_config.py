@@ -129,6 +129,14 @@ class Model:
     FlexAttention is compiled with max-autotune mode for better performance.
     """
 
+    use_liger_loss: bool = False
+    """
+    Use Liger fused linear cross entropy loss. This fuses the final linear projection
+    (lm_head) with cross entropy computation, avoiding materialization of the full
+    logits tensor and using a more efficient kernel. Requires liger-kernel.
+    Note: This will disable loss_parallel in tensor parallelism.
+    """
+
 
 @dataclass
 class Optimizer:

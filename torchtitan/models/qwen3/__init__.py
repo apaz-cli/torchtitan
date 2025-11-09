@@ -6,7 +6,10 @@
 #
 # Copyright (c) Meta Platforms, Inc. All Rights Reserved.
 
-from torchtitan.components.loss import build_cross_entropy_loss
+from torchtitan.components.loss import (
+    build_cross_entropy_loss,
+    build_liger_fused_linear_cross_entropy_loss,
+)
 from torchtitan.components.lr_scheduler import build_lr_schedulers
 from torchtitan.components.optimizer import build_optimizers
 from torchtitan.components.tokenizer import build_hf_tokenizer
@@ -191,6 +194,20 @@ qwen3_args = {
 }
 
 
+def build_qwen3_loss(job_config, **kwargs):
+    """
+    Build loss function for Qwen3, choosing between standard cross entropy
+    and Liger fused linear cross entropy based on model configuration.
+    """
+    # Check if Liger loss is requested in the job config
+    use_liger_loss = getattr(job_config.model, "use_liger_loss", False)
+
+    if use_liger_loss:
+        return build_liger_fused_linear_cross_entropy_loss(job_config, **kwargs)
+    else:
+        return build_cross_entropy_loss(job_config, **kwargs)
+
+
 def get_train_spec() -> TrainSpec:
     return TrainSpec(
         model_cls=Qwen3Model,
@@ -201,7 +218,7 @@ def get_train_spec() -> TrainSpec:
         build_lr_schedulers_fn=build_lr_schedulers,
         build_dataloader_fn=build_hf_dataloader,
         build_tokenizer_fn=build_hf_tokenizer,
-        build_loss_fn=build_cross_entropy_loss,
+        build_loss_fn=build_qwen3_loss,
         build_validator_fn=build_validator,
         state_dict_adapter=Qwen3StateDictAdapter,
     )

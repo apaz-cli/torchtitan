@@ -1,26 +1,16 @@
+#!/media/apaz/3607e103-9235-493c-9286-4bd241e24c90/torchtitan/run_config.sh
+
 [job]
 dump_folder = "./outputs"
-description = "Qwen 3 0.6B training"
-
-[profiling]
-enable_profiling = true
-save_traces_folder = "profile_trace"
-profile_freq = 10
-
-[metrics]
-log_freq = 1
-enable_tensorboard = false
-enable_wandb = false
-enable_aim = true
-save_tb_folder = "tb"
-save_for_all_ranks = false
+description = "Qwen 3 0.6B AO3 Fanfiction"
 
 [model]
 name = "qwen3"
 flavor = "0.6B"
 hf_assets_path = "./assets/hf/Qwen3-0.6B"
-converters = ["quantize.linear.mx"] # ["float8"]
-use_flex_attn = true
+converters = ["quantize.linear.mx"]
+#use_flex_attn = true
+#use_liger_loss = true
 
 [optimizer]
 name = "AdamW"
@@ -31,10 +21,10 @@ eps = 1e-8
 warmup_steps = 2  # lr scheduler warm up, 20% total steps
 
 [training]
-global_batch_size = 15
-local_batch_size = 3
+global_batch_size = 16
+local_batch_size = 2
 seq_len = 4096
-max_norm = 1.0  # grad norm clipping
+max_norm = 1.0
 steps = 20000
 dataset = "c4"
 
@@ -44,6 +34,7 @@ data_parallel_shard_degree = -1
 fsdp_reshard_after_forward = "default" # default / never / always
 tensor_parallel_degree = 1
 context_parallel_degree = 1
+disable_loss_parallel = true  # Required when use_liger_loss=true
 
 [checkpoint]
 enable = true
@@ -55,7 +46,7 @@ keep_latest_k = 2
 async_mode = "async" # ["disabled", "async", "async_with_pinned_mem"]
 
 [activation_checkpoint]
-mode = "full"  # ["none", "selective", "full"]
+mode = "selective"  # ["none", "selective", "full"]
 selective_ac_option = "op"  # "int" = ac every positive int layer or 'op', ac based on ops policy
 
 [compile]
@@ -64,5 +55,18 @@ components = ["model", "loss"]
 
 [quantize.linear.mx]
 recipe_name = "mxfp8_cublas" # "mxfp8_emulated" | "mxfp8_cublas" | "mxfp8_cublas_rceil" | "mxfp4_emulated" | "mxfp4_cutlass"
-mxfp8_dim1_cast_kernel_choice = "cuda"          # Options: "triton", "cuda", "torch" 
+mxfp8_dim1_cast_kernel_choice = "torch"          # Options: "triton", "cuda", "torch" 
 filter_fqns = ["output"]                        # Modules to skip (default skips output layer)
+
+[metrics]
+log_freq = 1
+enable_tensorboard = false
+enable_wandb = false
+enable_aim = true
+save_tb_folder = "tb"
+save_for_all_ranks = false
+
+[profiling]
+enable_profiling = false
+save_traces_folder = "profile_trace"
+profile_freq = 10

@@ -23,6 +23,76 @@ def cross_entropy_loss(pred: torch.Tensor, labels: torch.Tensor) -> torch.Tensor
     )
 
 
+def fused_linear_cross_entropy_loss(
+    hidden_states: torch.Tensor,
+    labels: torch.Tensor,
+    weight: torch.Tensor,
+    bias: torch.Tensor | None = None,
+    ignore_index: int = -100,
+    lse_square_scale: float = 0.0,
+    label_smoothing: float = 0.0,
+) -> torch.Tensor:
+    """
+    Fused linear + cross entropy using Liger kernel.
+
+    This function fuses the final linear projection (lm_head) with the cross-entropy
+    loss computation, avoiding materialization of the full logits tensor and using
+    a more efficient kernel.
+
+    Args:
+        hidden_states: Hidden states from final layer norm, shape (B, T, H)
+        labels: Target token indices, shape (B, T)
+        weight: Output projection weight, shape (V, H)
+        bias: Optional bias, shape (V) - Qwen3 doesn't use this
+        ignore_index: Index to ignore in loss computation (default: -100)
+        lse_square_scale: Z-loss coefficient for logit regularization (default: 0.0)
+        label_smoothing: Label smoothing factor (default: 0.0)
+
+    Returns:
+        Scalar loss tensor (main loss + z_loss if lse_square_scale > 0)
+    """
+    from liger_kernel.ops.fused_linear_cross_entropy import (
+        LigerFusedLinearCrossEntropyFunction,
+    )
+
+    # Flatten batch and sequence dimensions
+    # hidden_states: (B, T, H) -> (B*T, H)
+    # labels: (B, T) -> (B*T,)
+    if hidden_states.dim() == 3:
+        B, T, H = hidden_states.shape
+        hidden_states = hidden_states.view(-1, H)
+    if labels.dim() == 2:
+        labels = labels.view(-1)
+
+    # Determine if we need z_loss
+    return_z_loss = lse_square_scale > 0.0
+
+    # Call Liger fused kernel
+    # Function signature (excluding ctx):
+    # _input, weight, target, bias, ce_weight, ignore_index, lse_square_scale,
+    # label_smoothing, reduction, softcap, return_z_loss, accum_dtype, use_token_scaling
+    # Returns: (loss, z_loss) where z_loss can be None if return_z_loss=False
+    loss, z_loss = LigerFusedLinearCrossEntropyFunction.apply(
+        hidden_states,
+        weight,
+        labels,
+        bias,
+        None,  # ce_weight (class weights)
+        ignore_index,
+        lse_square_scale,
+        label_smoothing,
+        "mean",  # reduction
+        None,  # softcap
+        return_z_loss,
+        None,  # accum_dtype (use default dtype)
+        False,  # use_token_scaling
+    )
+
+    # If z_loss is requested, it's already added to the main loss by Liger
+    # The z_loss output is just for logging/monitoring
+    return loss
+
+
 def build_cross_entropy_loss(job_config: JobConfig, **kwargs):
     del kwargs  # delete any unused arguments
     loss_fn = cross_entropy_loss
@@ -30,6 +100,25 @@ def build_cross_entropy_loss(job_config: JobConfig, **kwargs):
         logger.info("Compiling the loss function with torch.compile")
         loss_fn = torch.compile(loss_fn, backend=job_config.compile.backend)
     return loss_fn
+
+
+def build_liger_fused_linear_cross_entropy_loss(job_config: JobConfig, **kwargs):
+    """
+    Build Liger fused linear cross entropy loss function.
+
+    Note: This loss function cannot be compiled with torch.compile since it uses
+    custom CUDA kernels from Liger. The loss function will be used as-is.
+    """
+    del kwargs  # delete any unused arguments
+
+    if job_config.compile.enable and "loss" in job_config.compile.components:
+        logger.warning(
+            "Liger fused linear cross entropy loss cannot be compiled. "
+            "Ignoring compile settings for loss."
+        )
+
+    logger.info("Using Liger fused linear cross entropy loss")
+    return fused_linear_cross_entropy_loss
 
 
 class RescaleAccumulatedLoss:

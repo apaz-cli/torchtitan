@@ -483,10 +483,22 @@ class Trainer(torch.distributed.checkpoint.stateful.Stateful):
             with self.train_context(optional_context_parallel_ctx):
                 assert len(model_parts) == 1
                 with self.maybe_enable_amp:
-                    pred = model_parts[0](inputs, **extra_inputs, **extra_kwargs)
-                    loss = self.loss_fn(pred, labels)
-                # need to free pred before bwd to avoid peaking memory
-                del pred
+
+                    use_liger_loss = getattr(getattr(model_parts[0], "model_args", None), "use_liger_loss", False)
+
+                    if use_liger_loss:
+                        hidden = model_parts[0](inputs, **extra_inputs, **extra_kwargs)
+                        loss = self.loss_fn(
+                            hidden, labels,
+                            model_parts[0].output.weight,
+                            model_parts[0].output.bias
+                        )
+                        del hidden
+                    else:
+                        pred = model_parts[0](inputs, **extra_inputs, **extra_kwargs)
+                        loss = self.loss_fn(pred, labels)
+                        del pred
+
                 loss.backward()
 
         return loss

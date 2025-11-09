@@ -41,6 +41,7 @@ class Qwen3ModelArgs(BaseModelArgs):
     eos_id: int = 151645
 
     enable_weight_tying: bool = False
+    use_liger_loss: bool = False
 
     # MoE params
     moe_enabled: bool = False
@@ -57,6 +58,9 @@ class Qwen3ModelArgs(BaseModelArgs):
 
         # Update attention implementation from config
         self.use_flex_attn = job_config.model.use_flex_attn
+
+        # Update loss function from config
+        self.use_liger_loss = job_config.model.use_liger_loss
 
         self.moe_args._debug_force_load_balance = (
             job_config.training.debug_moe_force_load_balance

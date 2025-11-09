@@ -481,7 +481,9 @@ class Qwen3Model(nn.Module, ModelProtocol):
                 previous pipeline stage if the current rank is not on the first stage.
 
         Returns:
-            torch.Tensor: Output logits after applying the Transformer model.
+            torch.Tensor: Output logits after applying the Transformer model, or hidden states
+                if use_liger_loss is enabled (in which case the output projection happens in
+                the Liger fused loss function).
 
         """
         # passthrough for nonexistent layers, allows easy configuration of pipeline parallel stages
@@ -491,5 +493,11 @@ class Qwen3Model(nn.Module, ModelProtocol):
             h = layer(h, self.rope_cache, attention_masks)
 
         h = self.norm(h) if self.norm else h
-        output = self.output(h) if self.output else h
-        return output
+
+        # When using Liger fused loss, return hidden states instead of logits
+        # The output projection will be fused with cross entropy in the loss function
+        if self.model_args.use_liger_loss:
+            return h
+        else:
+            output = self.output(h) if self.output else h
+            return output
