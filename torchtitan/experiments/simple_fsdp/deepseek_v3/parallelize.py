@@ -162,6 +162,9 @@ def parallelize_deepseekv3(
     if job_config.compile.enable:
         torch._inductor.config.reorder_for_peak_memory = False
         torch._dynamo.config.capture_scalar_outputs = True
-        model = torch.compile(model, backend=job_config.compile.backend, fullgraph=True)
+        compile_kwargs = {"backend": job_config.compile.backend, "fullgraph": True}
+        if job_config.compile.mode is not None:
+            compile_kwargs["mode"] = job_config.compile.mode
+        model = torch.compile(model, **compile_kwargs)
 
     return model

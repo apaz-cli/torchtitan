@@ -667,6 +667,9 @@ class Compile:
     """Which components to compile"""
     backend: str = "inductor"
 
+    mode: str | None = None
+    """torch.compile mode (e.g., 'default', 'reduce-overhead', 'max-autotune', 'max-autotune-no-cudagraphs')"""
+
 
 @dataclass
 class Float8Linear:

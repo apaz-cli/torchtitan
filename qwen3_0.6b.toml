@@ -53,6 +53,7 @@ selective_ac_option = "op"  # "int" = ac every positive int layer or 'op', ac ba
 [compile]
 enable = true
 components = ["model", "loss"]
+#mode = "max-autotune-no-cudagraphs"
 
 [quantize.linear.mx]
 recipe_name = "mxfp8_cublas" # "mxfp8_emulated" | "mxfp8_cublas" | "mxfp8_cublas_rceil" | "mxfp4_emulated" | "mxfp4_cutlass"
@@ -71,4 +72,6 @@ save_for_all_ranks = false
 enable_profiling = true
 kill_after_profile = true
 save_traces_folder = "profile_trace"
-profile_freq = 10
+profile_freq = 4
+profiler_warmup = 3
+profiler_active = 1

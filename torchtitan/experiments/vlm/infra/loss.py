@@ -109,5 +109,8 @@ def build_token_imbalance_ce_loss(
     loss_fn = partial(token_imbalance_ce_loss, token_mesh=token_mesh, ft_pg=ft_pg)
     if job_config.compile.enable and "loss" in job_config.compile.components:
         logger.info("Compiling the loss function with torch.compile")
-        loss_fn = torch.compile(loss_fn, backend=job_config.compile.backend)
+        compile_kwargs = {"backend": job_config.compile.backend}
+        if job_config.compile.mode is not None:
+            compile_kwargs["mode"] = job_config.compile.mode
+        loss_fn = torch.compile(loss_fn, **compile_kwargs)
     return loss_fn
