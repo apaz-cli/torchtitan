@@ -3,6 +3,7 @@
 [job]
 dump_folder = "./outputs"
 description = "Qwen 3 0.6B AO3 Fanfiction"
+run_name = "Training Run"
 
 [model]
 name = "qwen3"
@@ -21,7 +22,7 @@ eps = 1e-8
 warmup_steps = 2  # lr scheduler warm up, 20% total steps
 
 [training]
-global_batch_size = 16
+global_batch_size = 32
 local_batch_size = 2
 seq_len = 4096
 max_norm = 1.0

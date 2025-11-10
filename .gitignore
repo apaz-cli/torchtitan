@@ -9,6 +9,7 @@ dist/*
 .vs
 .venv/**
 .aim/**
+ablation_traces/**
 
 # data
 data

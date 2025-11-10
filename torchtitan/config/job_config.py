@@ -19,6 +19,9 @@ class Job:
     description: str = "default job"
     """Description of the job"""
 
+    run_name: str | None = None
+    """Custom run name for metrics tracking (used by Aim, Wandb, etc.)"""
+
     print_config: bool = False
     """Print the configs to terminal"""
 

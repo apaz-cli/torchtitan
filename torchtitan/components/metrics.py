@@ -207,6 +207,10 @@ class AimLogger(BaseLogger):
             experiment=os.getenv("AIM_EXPERIMENT", job_config.job.description),
         )
 
+        # Set custom run name if provided
+        if job_config.job.run_name:
+            self.run.name = job_config.job.run_name
+
         # Track hyperparameters
         self.run["hparams"] = job_config.to_dict()
         logger.info(f"Aim logging enabled. Logs will be saved at {aim_repo}")
